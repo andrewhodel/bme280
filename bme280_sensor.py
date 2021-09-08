@@ -4,13 +4,49 @@ import time
 import urllib2
 import json
 
-req = urllib2.Request("https://dev.ispapp.co:8550/update", headers={"content-type": "application/json"})
-
 port = 1
 address = 0x76
 bus = smbus2.SMBus(port)
 
 calibration_params = bme280.load_calibration_params(bus, address)
+
+intervalS = 20;
+outageIntervalSeconds = 0;
+ispapp_key = "asdf"
+ispapp_domain = "dev.ispapp.co"
+ispapp_port = 8550
+
+ureq = urllib2.Request("https://" + ispapp_domain + ":" + str(ispapp_port) + "/update", headers={"content-type": "application/json"})
+creq = urllib2.Request("https://" + ispapp_domain + ":" + str(ispapp_port) + "/config", headers={"content-type": "application/json"})
+
+while True:
+
+    print("\nmaking config request")
+
+    sjson = {"login": "1210_plenum", "key": ispapp_key}
+    json_d = json.dumps(sjson)
+
+    try:
+        resp = urllib2.urlopen(creq, json_d, cafile="/etc/__ispapp_co.ca-bundle").read()
+    except:
+        print("urllib2.urlopen() reported an error")
+        time.sleep(2)
+        continue
+
+    r = json.loads(resp)
+
+    if (r.has_key("error")):
+        # if there was an error, try again
+        time.sleep(2)
+        continue
+
+    # valid config request
+    #print(r)
+
+    # set intervalS based on server configuration
+    outageIntervalSeconds = r["host"]["outageIntervalSeconds"]
+
+    break
 
 while True:
 
@@ -19,20 +55,43 @@ while True:
     data = bme280.sample(bus, address, calibration_params)
 
     # the compensated_reading class has the following attributes
-    print(data.id)
-    print(data.timestamp)
-    print(data.temperature)
-    print(data.pressure)
-    print(data.humidity)
+    #print(data.id)
+    #print(data.timestamp)
+    #print(data.temperature)
+    #print(data.pressure)
+    #print(data.humidity)
 
     # there is a handy string representation too
-    print(data)
+    #print(data)
 
-    sjson = {"login": "1210_plenum", "key": "LSDKJFGNBjfdaabuebnfbqo4385hg44bg9gsjdefslkihjdlskFHKJSDHGIUFDDbndusfosghiofewhfvoubdsfsbhsofufhndsuodfagasgfgsdwasalreadyviewableincollectthesameasgithub", "collectors": {"ping": [{"host": "temp", "avgRtt": data.temperature, "loss": 0}, {"host": "hum", "avgRtt": data.humidity, "loss": 0}, {"host": "pressure", "avgRtt": data.pressure, "loss": 0}]}}
+    print("\nmaking update request")
+
+    sjson = {"login": "1210_plenum", "key": ispapp_key, "collectors": {"ping": [{"host": "temp", "avgRtt": data.temperature, "loss": 0}, {"host": "hum", "avgRtt": data.humidity, "loss": 0}, {"host": "pressure", "avgRtt": data.pressure, "loss": 0}]}}
     json_d = json.dumps(sjson)
+    #print(json_d)
 
-    resp = urllib2.urlopen(req, json_d, cafile="/etc/__ispapp_co.ca-bundle").read()
+    try:
+        resp = urllib2.urlopen(ureq, json_d, cafile="/etc/__ispapp_co.ca-bundle").read()
+    except:
+        print("urllib2.urlopen() reported an error")
+        time.sleep(2)
+        continue
 
-    print(resp)
+    r = json.loads(resp)
 
-    time.sleep(10)
+    if (r.has_key("error")):
+        # if there was an error, try again
+        time.sleep(2)
+        continue
+
+    if (r["updateFast"]):
+        print("updateFast is True, setting update interval to 2 seconds")
+        intervalS = 2
+    else:
+        # set update wait based on offset, expect 2 seconds for data collection
+        intervalS = outageIntervalSeconds - r["lastUpdateOffsetSec"] - 2
+        if (intervalS < 2):
+            intervalS = 2
+        print("updating in " + str(intervalS) + " seconds")
+
+    time.sleep(intervalS)
