@@ -5,8 +5,7 @@ import urllib2
 import json
 import threading
 import platform
-
-start_time = time.time()
+import os
 
 # setup configuration
 intervalS = 20;
@@ -90,18 +89,17 @@ while True:
 
     print("\nmaking update request")
 
-    ut = int(time.time() - start_time)
-
     # create the request POST json with the bme280 data
-    sjson = {"login": "1210_plenum", "key": ispapp_key, "uptime": ut, "collectors": {"ping": [{"host": "temp", "avgRtt": data.temperature, "loss": 0}, {"host": "hum", "avgRtt": data.humidity, "loss": 0}, {"host": "pressure", "avgRtt": data.pressure, "loss": 0}]}}
+    sjson = {"login": "1210_plenum", "key": ispapp_key, "uptime": int(os.times()[4]), "collectors": {"ping": [{"host": "temp", "avgRtt": data.temperature, "loss": 0}, {"host": "hum", "avgRtt": data.humidity, "loss": 0}, {"host": "pressure", "avgRtt": data.pressure, "loss": 0}]}}
     json_d = json.dumps(sjson)
 
     # urllib2.urlopen sends raw text and does not add a trailing newline character
     json_d += "\r\n"
+    #print(json_d)
 
     try:
         resp = urllib2.urlopen(ureq, json_d, cafile="/etc/__ispapp_co.ca-bundle").read()
-        print(resp)
+        #print(resp)
     except:
         print("urllib2.urlopen() reported an error")
         time.sleep(2)
