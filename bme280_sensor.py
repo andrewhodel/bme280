@@ -4,6 +4,7 @@ import time
 import urllib2
 import json
 import threading
+import platform
 
 # setup configuration
 intervalS = 20;
@@ -55,7 +56,7 @@ while True:
 
     print("\nmaking config request")
 
-    sjson = {"login": "1210_plenum", "key": ispapp_key}
+    sjson = {"login": "1210_plenum", "key": ispapp_key, "clientInfo": "python2.7 bme280.py", "os": platform.system(), "osVersion": platform.release(), "hardwareMake": "raspberry pi", "hardwareModel": "zero w", "hardwareCpuInfo": platform.machine()}
     json_d = json.dumps(sjson)
 
     try:
