@@ -3,6 +3,14 @@ import bme280
 import time
 import urllib2
 import json
+import threading
+
+# setup configuration
+intervalS = 20;
+outageIntervalSeconds = 0;
+ispapp_key = "asdf"
+ispapp_domain = "dev.ispapp.co"
+ispapp_port = 8550
 
 port = 1
 address = 0x76
@@ -10,12 +18,36 @@ bus = smbus2.SMBus(port)
 
 calibration_params = bme280.load_calibration_params(bus, address)
 
-intervalS = 20;
-outageIntervalSeconds = 0;
-ispapp_key = "asdf"
-ispapp_domain = "dev.ispapp.co"
-ispapp_port = 8550
+# create global data object
+data = bme280.sample(bus, address, calibration_params)
 
+# create a thread to get data from the bme280 every second
+def get_data():
+
+    while True:
+
+        # the sample method will take a single reading and return a
+        # compensated_reading object
+        data = bme280.sample(bus, address, calibration_params)
+
+        # the compensated_reading class has the following attributes
+        #print(data.id)
+        #print(data.timestamp)
+        #print(data.temperature)
+        #print(data.pressure)
+        #print(data.humidity)
+
+        # there is a handy string representation too
+        #print(data)
+
+        time.sleep(1)
+
+# start the bme280 collection thread
+th = threading.Thread(target=get_data)
+th.daemon = True
+th.start()
+
+# setup url endpoints
 ureq = urllib2.Request("https://" + ispapp_domain + ":" + str(ispapp_port) + "/update", headers={"content-type": "application/json"})
 creq = urllib2.Request("https://" + ispapp_domain + ":" + str(ispapp_port) + "/config", headers={"content-type": "application/json"})
 
@@ -50,22 +82,9 @@ while True:
 
 while True:
 
-    # the sample method will take a single reading and return a
-    # compensated_reading object
-    data = bme280.sample(bus, address, calibration_params)
-
-    # the compensated_reading class has the following attributes
-    #print(data.id)
-    #print(data.timestamp)
-    #print(data.temperature)
-    #print(data.pressure)
-    #print(data.humidity)
-
-    # there is a handy string representation too
-    #print(data)
-
     print("\nmaking update request")
 
+    # create the request POST json with the bme280 data
     sjson = {"login": "1210_plenum", "key": ispapp_key, "collectors": {"ping": [{"host": "temp", "avgRtt": data.temperature, "loss": 0}, {"host": "hum", "avgRtt": data.humidity, "loss": 0}, {"host": "pressure", "avgRtt": data.pressure, "loss": 0}]}}
     json_d = json.dumps(sjson)
     #print(json_d)
