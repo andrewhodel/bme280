@@ -26,6 +26,8 @@ data = bme280.sample(bus, address, calibration_params)
 # create a thread to get data from the bme280 every second
 def get_data():
 
+    global data
+
     while True:
 
         # the sample method will take a single reading and return a
