@@ -90,7 +90,7 @@ while True:
     print("\nmaking update request")
 
     # create the request POST json with the bme280 data
-    sjson = {"login": "1210_plenum", "key": ispapp_key, "uptime": int(os.times()[4]), "collectors": {"ping": [{"host": "temp", "avgRtt": data.temperature, "loss": 0}, {"host": "hum", "avgRtt": data.humidity, "loss": 0}, {"host": "pressure", "avgRtt": data.pressure, "loss": 0}]}}
+    sjson = {"login": "1210_plenum", "key": ispapp_key, "uptime": int(os.times()[4]), "collectors": {"gauge": [{"name": "temperature", "point": data.temperature}, {"name": "relative humidity", "point": data.humidity}, {"name": "pressure", "point": data.pressure}]}}
     json_d = json.dumps(sjson)
 
     # urllib2.urlopen sends raw text and does not add a trailing newline character
