@@ -61,6 +61,9 @@ while True:
     sjson = {"login": "1210_plenum", "key": ispapp_key, "clientInfo": "python2.7 bme280.py", "os": platform.system(), "osVersion": platform.release(), "hardwareMake": "raspberry pi", "hardwareModel": "zero w", "hardwareCpuInfo": platform.machine()}
     json_d = json.dumps(sjson)
 
+    # urllib2.urlopen sends raw text and does not add a trailing newline character
+    json_d += "\r\n"
+
     try:
         resp = urllib2.urlopen(creq, json_d, cafile="/etc/__ispapp_co.ca-bundle").read()
     except:
@@ -90,8 +93,11 @@ while True:
     ut = int(time.time() - start_time)
 
     # create the request POST json with the bme280 data
-    sjson = "{\"login\": \"1210_plenum\", \"key\": " + ispapp_key + ", \"uptime\": " + str(ut) + ", \"collectors\": {\"ping\": [{\"host\": \"temp\", \"avgRtt\": " + str(data.temperature) + ", \"loss\": 0}, {\"host\": \"hum\", \"avgRtt\": " + str(data.humidity) + ", \"loss\": 0}, {\"host\": \"pressure\", \"avgRtt\": " + str(data.pressure) + ", \"loss\": 0}]}}"
-    print(sjson)
+    sjson = {"login": "1210_plenum", "key": ispapp_key, "uptime": ut, "collectors": {"ping": [{"host": "temp", "avgRtt": data.temperature, "loss": 0}, {"host": "hum", "avgRtt": data.humidity, "loss": 0}, {"host": "pressure", "avgRtt": data.pressure, "loss": 0}]}}
+    json_d = json.dumps(sjson)
+
+    # urllib2.urlopen sends raw text and does not add a trailing newline character
+    json_d += "\r\n"
 
     try:
         resp = urllib2.urlopen(ureq, json_d, cafile="/etc/__ispapp_co.ca-bundle").read()
