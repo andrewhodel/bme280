@@ -11,7 +11,7 @@ import ssl
 # setup configuration
 intervalS = 20;
 outageIntervalSeconds = 0;
-ispapp_key = "asdf"
+ispapp_key = ""
 ispapp_domain = "dev.ispapp.co"
 ispapp_port = 8550
 
@@ -76,7 +76,15 @@ while True:
 
         ssl_sock.write("POST /config HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n")
 
-        resp = ssl_sock.read()
+        resp = b''
+        while (True):
+            chunk = ssl_sock.recv(1024)
+            resp += chunk
+            if (len(chunk) < 1024):
+                break
+
+        #print(resp)
+
         ssl_sock.close()
 
         head = resp.split("\r\n\r\n", 1)
@@ -121,7 +129,15 @@ while True:
 
         ssl_sock.write("POST /update HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n")
 
-        resp = ssl_sock.read()
+        resp = b''
+        while (True):
+            chunk = ssl_sock.recv(1024)
+            resp += chunk
+            if (len(chunk) < 1024):
+                break
+
+        #print(resp)
+
         ssl_sock.close()
 
         head = resp.split("\r\n\r\n", 1)
