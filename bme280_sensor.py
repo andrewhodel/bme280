@@ -9,8 +9,9 @@ import socket
 import ssl
 
 # setup configuration
-intervalS = 20;
-outageIntervalSeconds = 0;
+intervalS = 20
+outageIntervalSeconds = 0
+ispapp_login = ""
 ispapp_key = ""
 ispapp_domain = "dev.ispapp.co"
 ispapp_port = 8550
@@ -63,7 +64,7 @@ while True:
 
     print("\nmaking config request")
 
-    sjson = {"login": "1210_plenum", "key": ispapp_key, "clientInfo": "python2.7 bme280.py", "os": platform.system(), "osVersion": platform.release(), "hardwareMake": "raspberry pi", "hardwareModel": "zero w", "hardwareCpuInfo": platform.machine(), "webshellSupport": False, "firmwareUpgradeSupport": False, "bandwidthTestSupport": False}
+    sjson = {"clientInfo": "python2.7 bme280.py", "os": platform.system(), "osVersion": platform.release(), "hardwareMake": "raspberry pi", "hardwareModel": "zero w", "hardwareCpuInfo": platform.machine(), "webshellSupport": False, "firmwareUpgradeSupport": False, "bandwidthTestSupport": False}
     json_d = json.dumps(sjson)
 
     try:
@@ -74,7 +75,7 @@ while True:
 
         print(json_d)
 
-        ssl_sock.write("POST /config HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n")
+        ssl_sock.write("POST /config?login=" + ispapp_login + "&key=" + ispapp_key + " HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n")
 
         resp = b''
         while (True):
@@ -116,7 +117,7 @@ while True:
     print("\nmaking update request")
 
     # create the request POST json with the bme280 data
-    sjson = {"login": "1210_plenum", "key": ispapp_key, "uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}}
+    sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}}
     json_d = json.dumps(sjson)
 
     try:
@@ -127,7 +128,7 @@ while True:
 
         #print(json_d)
 
-        ssl_sock.write("POST /update HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n")
+        ssl_sock.write("POST /update?login=" + ispapp_login + "&key=" + ispapp_key + " HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n")
 
         resp = b''
         while (True):
