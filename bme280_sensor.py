@@ -11,9 +11,10 @@ import ssl
 # setup configuration
 intervalS = 20
 outageIntervalSeconds = 0
-ispapp_login = ""
-ispapp_key = ""
-ispapp_domain = "dev.ispapp.co"
+updateIntervaSeconds = 0
+ispapp_login = "aaaa"
+ispapp_key = "aaaaaa"
+ispapp_domain = "subdomain.ispapp.co"
 ispapp_port = 8550
 
 port = 1
@@ -102,8 +103,9 @@ while True:
         # valid config request
         #print(r)
 
-        # set intervalS based on server configuration
+        # store intervals
         outageIntervalSeconds = r["host"]["outageIntervalSeconds"]
+        updateIntervalSeconds = r["host"]["updateIntervalSeconds"]
 
     except Exception as e:
         print("error", e)
@@ -158,10 +160,14 @@ while True:
             print("updateFast is True, setting update interval to 2 seconds")
             intervalS = 2
         else:
-            # set update wait based on offset, expect 2 seconds for data collection
-            intervalS = outageIntervalSeconds - r["lastUpdateOffsetSec"] - 2
-            if (intervalS < 2):
-                intervalS = 2
+            # set update interval from outage update and offset
+            intervalS = outageIntervalSeconds - r["lastUpdateOffsetSec"]
+
+            if (updateIntervalSeconds - r["lastColUpdateOffsetSec"] <= intervalS + 5):
+                # the next update response is within this update response plus request response time (5 seconds max, on planet)
+                # set update interval from collector update and offset
+                intervalS = updateIntervalSeconds - r["lastColUpdateOffsetSec"]
+
             print("updating in " + str(intervalS) + " seconds")
 
     except Exception as e:
