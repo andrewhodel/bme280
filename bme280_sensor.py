@@ -7,14 +7,15 @@ import platform
 import os
 import socket
 import ssl
+import subprocess
 
 # setup configuration
 intervalS = 20
 outageIntervalSeconds = 0
 updateIntervaSeconds = 0
-ispapp_login = "aaaa"
-ispapp_key = "aaaaaa"
-ispapp_domain = "subdomain.ispapp.co"
+ispapp_login = "aaaaaaaaa"
+ispapp_key = "aaaaaaaaaaaaaa"
+ispapp_domain = "domain.tld"
 ispapp_port = 8550
 
 port = 1
@@ -118,15 +119,53 @@ while True:
 
     print("\nmaking update request")
 
-    # create the request POST json with the bme280 data
-    sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}}
-    json_d = json.dumps(sjson)
-
     try:
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         ssl_sock = context.wrap_socket(s, server_hostname=ispapp_domain)
         ssl_sock.connect((ispapp_domain, ispapp_port))
+
+        # get IP address
+        ipinfo = subprocess.check_output(['/sbin/ifconfig'])
+        routeinfo = subprocess.check_output(['/sbin/route', '-n'])
+        ipaddr = ""
+        wan_interface = ""
+
+        route_lines = routeinfo.splitlines()
+        for r in route_lines:
+            try:
+                # IPv4
+                if (r.index('0.0.0.0') == 0):
+                        try:
+                            p = r.split()
+                            wan_interface = p[-1]
+                        except Exception as e:
+                            pass
+            except Exception as e:
+                pass
+
+        if (wan_interface != ""):
+                #print("wan interface", wan_interface)
+                ifconfig_lines = ipinfo.splitlines()
+                index = 0
+                for l in ifconfig_lines:
+                    try:
+                        if (l.index(wan_interface) == 0):
+                            # next line has IP address
+                            try:
+                                p = ifconfig_lines[index+1].split()
+                                ipaddr = p[1]
+                            except Exception as e:
+                                pass
+                    except Exception as e:
+                        pass
+                    index += 1
+
+        #print(ipaddr)
+
+        # create the request POST json with the bme280 data
+        sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}, "wanIp": ipaddr}
+        json_d = json.dumps(sjson)
 
         #print(json_d)
 
