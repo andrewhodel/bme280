@@ -13,8 +13,8 @@ import subprocess
 intervalS = 20
 outageIntervalSeconds = 0
 updateIntervaSeconds = 0
-ispapp_login = "aaaaaaaaa"
-ispapp_key = "aaaaaaaaaaaaaa"
+ispapp_login = "aaaaaaaaaa"
+ispapp_key = "aaaaaaa"
 ispapp_domain = "domain.tld"
 ispapp_port = 8550
 
@@ -199,12 +199,11 @@ while True:
             print("updateFast is True, setting update interval to 2 seconds")
             intervalS = 2
         else:
-            # set update interval from outage update and offset
+            # update using the outage update wait
             intervalS = outageIntervalSeconds - r["lastUpdateOffsetSec"]
 
-            if (updateIntervalSeconds - r["lastColUpdateOffsetSec"] <= intervalS + 5):
-                # the next update response is within this update response plus request response time (5 seconds max, on planet)
-                # set update interval from collector update and offset
+            if (updateIntervalSeconds - r["lastColUpdateOffsetSec"] <= intervalS):
+                # update using the col update wait
                 intervalS = updateIntervalSeconds - r["lastColUpdateOffsetSec"]
 
             print("updating in " + str(intervalS) + " seconds")
