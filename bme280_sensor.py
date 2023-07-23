@@ -14,7 +14,7 @@ intervalS = 20
 outageIntervalSeconds = 0
 updateIntervaSeconds = 0
 ispapp_login = "aaaaaaaaaa"
-ispapp_key = "aaaaaaa"
+ispapp_key = "aaaaaaaaaaaa"
 ispapp_domain = "domain.tld"
 ispapp_port = 8550
 
@@ -206,11 +206,14 @@ while True:
                 # update using the col update wait
                 intervalS = updateIntervalSeconds - r["lastColUpdateOffsetSec"]
 
-            print("updating in " + str(intervalS) + " seconds")
+        if (type(intervalS) != int):
+            # invalid interval
+            intervalS = 2
+
+        print("updating in " + str(intervalS) + " seconds")
 
     except Exception as e:
         print("/update error", e)
-        time.sleep(2)
-        continue
+        intervalS = 2
 
     time.sleep(intervalS)
