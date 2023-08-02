@@ -13,8 +13,8 @@ import subprocess
 intervalS = 20
 outageIntervalSeconds = 0
 updateIntervaSeconds = 0
-ispapp_login = "aaaaaaaaaaaaaaaaaaa"
-ispapp_key = "aaaaaaaaaaaaaaaaaaaaa"
+ispapp_login = "aaaa"
+ispapp_key = "aaaa"
 ispapp_domain = "monitor.xyzbots.com"
 ispapp_port = 8550
 
@@ -210,14 +210,14 @@ while True:
             # invalid interval
             intervalS = 2
 
-        if (intervalS < 0):
-            # time.sleep() does not accept a negative number
-            intervalS = 0
-
         print("updating in " + str(intervalS) + " seconds")
 
     except Exception as e:
         print("/update error", e)
         intervalS = 2
+
+    if (intervalS < 0):
+        # time.sleep() does not accept a negative number
+        intervalS = 0
 
     time.sleep(intervalS)
