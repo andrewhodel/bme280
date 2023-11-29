@@ -8,15 +8,32 @@ import os
 import socket
 import ssl
 import subprocess
+import getopt
+import sys
 
 # setup configuration
 intervalS = 20
 outageIntervalSeconds = 0
 updateIntervaSeconds = 0
-ispapp_login = "aaaa"
-ispapp_key = "aaaa"
+ispapp_login = "aaaaaa"
+ispapp_key = "aaaaa"
 ispapp_domain = "monitor.xyzbots.com"
 ispapp_port = 8550
+
+print("Usage: python3 bme280.py --domain=domain --port=port --login=login --key=key")
+
+opts, args = getopt.getopt(sys.argv[1:], "", ["domain=", "port=", "login=", "key="])
+
+for o, a in opts:
+
+    if (o == "--domain"):
+        ispapp_domain = a
+    elif (o == "--port"):
+        ispapp_port = int(a)
+    elif (o == "--login"):
+        ispapp_login = a
+    elif (o == "--key"):
+        ispapp_key = a
 
 port = 1
 address = 0x76
@@ -60,7 +77,7 @@ context = ssl.SSLContext(ssl.PROTOCOL_TLS)
 context.verify_mode = ssl.CERT_REQUIRED
 context.check_hostname = True
 context.load_default_certs()
-context.load_verify_locations(cafile="/etc/__ispapp_co.ca-bundle")
+context.load_verify_locations(cafile="/home/pi/ca-bundle.ca-bundle")
 
 while True:
 
@@ -75,34 +92,31 @@ while True:
         ssl_sock = context.wrap_socket(s, server_hostname=ispapp_domain)
         ssl_sock.connect((ispapp_domain, ispapp_port))
 
-        print(json_d)
+        ssl_sock.send(bytes("POST /config?login=" + ispapp_login + "&key=" + ispapp_key + " HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n", "utf-8"))
 
-        ssl_sock.write("POST /config?login=" + ispapp_login + "&key=" + ispapp_key + " HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n")
-
-        resp = b''
+        resp = b""
         while (True):
             chunk = ssl_sock.recv(1024)
             resp += chunk
             if (len(chunk) < 1024):
                 break
 
-        #print(resp)
-
         ssl_sock.close()
 
-        head = resp.split("\r\n\r\n", 1)
+        head = resp.split(bytes("\r\n\r\n", "utf-8"), 1)
+
         resp = head[1]
         head = head[0]
 
         r = json.loads(resp)
 
-        if (r.has_key("error")):
+        if ("error" in r):
             # if there was an error, try again
+            print("error", r["error"])
             time.sleep(2)
             continue
 
         # valid config request
-        #print(r)
 
         # store intervals
         outageIntervalSeconds = r["host"]["outageIntervalSeconds"]
@@ -126,8 +140,8 @@ while True:
         ssl_sock.connect((ispapp_domain, ispapp_port))
 
         # get IP address
-        ipinfo = subprocess.check_output(['/sbin/ifconfig'])
-        routeinfo = subprocess.check_output(['/sbin/route', '-n'])
+        ipinfo = subprocess.check_output(["/sbin/ifconfig"])
+        routeinfo = subprocess.check_output(["/sbin/route", "-n"])
         ipaddr = ""
         wan_interface = ""
 
@@ -135,7 +149,7 @@ while True:
         for r in route_lines:
             try:
                 # IPv4
-                if (r.index('0.0.0.0') == 0):
+                if (r.index("0.0.0.0") == 0):
                         try:
                             p = r.split()
                             wan_interface = p[-1]
@@ -167,11 +181,11 @@ while True:
         sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}, "wanIp": ipaddr}
         json_d = json.dumps(sjson)
 
-        #print(json_d)
+        print(json_d)
 
-        ssl_sock.write("POST /update?login=" + ispapp_login + "&key=" + ispapp_key + " HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n")
+        ssl_sock.send(bytes("POST /update?login=" + ispapp_login + "&key=" + ispapp_key + " HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n", "utf-8"))
 
-        resp = b''
+        resp = b""
         while (True):
             chunk = ssl_sock.recv(1024)
             resp += chunk
@@ -182,16 +196,15 @@ while True:
 
         ssl_sock.close()
 
-        head = resp.split("\r\n\r\n", 1)
+        head = resp.split(bytes("\r\n\r\n", "utf-8"), 1)
         resp = head[1]
         head = head[0]
 
         r = json.loads(resp)
 
-        #print(r)
-
-        if (r.has_key("error")):
+        if ("error" in r):
             # if there was an error, try again
+            print("error", r["error"])
             time.sleep(2)
             continue
 
