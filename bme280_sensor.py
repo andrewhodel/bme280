@@ -110,6 +110,8 @@ while True:
 
         r = json.loads(resp)
 
+        #print(r)
+
         if ("error" in r):
             # if there was an error, try again
             print("error", r["error"])
@@ -181,7 +183,7 @@ while True:
         sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}, "wanIp": ipaddr}
         json_d = json.dumps(sjson)
 
-        print(json_d)
+        #print(json_d)
 
         ssl_sock.send(bytes("POST /update?login=" + ispapp_login + "&key=" + ispapp_key + " HTTP/1.1\r\nHost: " + ispapp_domain + ":" + str(ispapp_domain) + "\r\nConnection: keep-alive\r\nContent-Type: application/json\r\nContent-Length: " + str(len(json_d)) + "\r\n\r\n" + json_d + "\r\n\r\n", "utf-8"))
 
@@ -201,6 +203,8 @@ while True:
         head = head[0]
 
         r = json.loads(resp)
+
+        print(r)
 
         if ("error" in r):
             # if there was an error, try again
