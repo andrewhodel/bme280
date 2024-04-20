@@ -10,6 +10,7 @@ import ssl
 import subprocess
 import getopt
 import sys
+import random
 
 # setup configuration
 intervalS = 20
@@ -199,11 +200,19 @@ while True:
 
         #print(ipaddr)
 
+        # create random length string
+        random_length = random.randrange(800)
+        random_string = ""
+        r = 0
+        while (r < random_length):
+            random_string += "0"
+            r += 1
+
         # create the request POST json with the bme280 data
         if (data == None):
-            sjson = {"uptime": int(os.times()[4]), "collectors": {}, "wanIp": ipaddr}
+            sjson = {"uptime": int(os.times()[4]), "collectors": {}, "wanIp": ipaddr, "random": random_string}
         else:
-            sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}, "wanIp": ipaddr}
+            sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}, "wanIp": ipaddr, "random": random_string}
         json_d = json.dumps(sjson)
 
         #print(json_d)
