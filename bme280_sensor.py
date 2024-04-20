@@ -39,11 +39,6 @@ port = 1
 address = 0x76
 bus = smbus2.SMBus(port)
 
-calibration_params = bme280.load_calibration_params(bus, address)
-
-# create global data object
-data = bme280.sample(bus, address, calibration_params)
-
 # create a thread to get data from the bme280 every second
 def get_data():
 
@@ -51,9 +46,25 @@ def get_data():
 
     while True:
 
+        time.sleep(1)
+
+        if (data == None):
+            try:
+                # try to calibrate again
+                calibration_params = bme280.load_calibration_params(bus, address)
+            except Exception as e:
+                # could not calibrate
+                data = None
+                continue
+
         # the sample method will take a single reading and return a
         # compensated_reading object
-        data = bme280.sample(bus, address, calibration_params)
+        try:
+            data = bme280.sample(bus, address, calibration_params)
+        except Exception as e:
+            # set data to None to not send invalid data
+            data = None
+            continue
 
         # the compensated_reading class has the following attributes
         #print(data.id)
@@ -65,12 +76,21 @@ def get_data():
         # there is a handy string representation too
         #print(data)
 
-        time.sleep(1)
+try:
 
-# start the bme280 collection thread
-th = threading.Thread(target=get_data)
-th.daemon = True
-th.start()
+    calibration_params = bme280.load_calibration_params(bus, address)
+
+    # create global data object
+    data = bme280.sample(bus, address, calibration_params)
+
+    # start the bme280 collection thread
+    th = threading.Thread(target=get_data)
+    th.daemon = True
+    th.start()
+
+except Exception as e:
+    print("no bme280 sensor found")
+    data = None
 
 # setup url endpoints
 context = ssl.SSLContext(ssl.PROTOCOL_TLS)
@@ -180,7 +200,10 @@ while True:
         #print(ipaddr)
 
         # create the request POST json with the bme280 data
-        sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}, "wanIp": ipaddr}
+        if (data == None):
+            sjson = {"uptime": int(os.times()[4]), "collectors": {}, "wanIp": ipaddr}
+        else:
+            sjson = {"uptime": int(os.times()[4]), "collectors": {"sensor": {"env": [{"name": "BME280 Environment Sensor", "temp": data.temperature, "humidity": data.humidity, "pressure": data.pressure}]}}, "wanIp": ipaddr}
         json_d = json.dumps(sjson)
 
         #print(json_d)
