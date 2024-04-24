@@ -16,6 +16,8 @@ The main header pins are two rows that span the length of the board and are next
 
 The bottom pin on the left row is a square and provides +3.3vdc.
 
+```
 blue	GPIO 9	SCL 1	**	ground, black
 green	GPIO 8	SDA 1	**
 white	+3.3vdc		**
+```

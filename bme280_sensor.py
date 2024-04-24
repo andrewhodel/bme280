@@ -84,14 +84,14 @@ try:
     # create global data object
     data = bme280.sample(bus, address, calibration_params)
 
-    # start the bme280 collection thread
-    th = threading.Thread(target=get_data)
-    th.daemon = True
-    th.start()
-
 except Exception as e:
     print("no bme280 sensor found")
     data = None
+
+# start the bme280 collection thread
+th = threading.Thread(target=get_data)
+th.daemon = True
+th.start()
 
 # setup url endpoints
 context = ssl.SSLContext(ssl.PROTOCOL_TLS)
